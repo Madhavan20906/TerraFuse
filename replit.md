@@ -1,6 +1,6 @@
-# [Project name]
+# TerraFuse
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+TerraFuse is an environmental decision firewall that helps organizations review procurement choices before approval.
 
 ## Run & Operate
 
@@ -22,23 +22,34 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/terrafuse/src/App.tsx` — the single-page review room and deterministic impact model
+- `artifacts/terrafuse/src/index.css` — TerraFuse visual tokens and responsive component styling
+- `artifacts/terrafuse/.replit-artifact/artifact.toml` — web artifact routing and run configuration
+- `attached_assets/` — the original TerraFuse concept and NextStep Hacks reference material
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- The first demo is intentionally client-side so judges can use it without credentials or external-service setup.
+- Environmental outputs are deterministic estimates derived from visible assumptions; the UI does not present invented LLM numbers as measured facts.
+- The initial surface focuses on one procurement decision loop: assumptions, consequence estimate, alternatives/evidence, and approval.
+- Upload intake is represented as a local demo state for the first build; persistent document storage and extraction can be added after the judging MVP.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Preloaded college-festival procurement case with a clear environmental risk review.
+- Editable quantity, reuse cycles, and supplier distance assumptions with live recalculation.
+- Impact summary for estimated CO₂e, waste, water, recyclability, landfill risk, freight share, and confidence.
+- Alternative comparison with selectable recommendation, evidence inspection, and an approval state.
+- New-intake state that accepts procurement files and can fall back to the demo case.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+_None recorded._
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Keep all environmental outputs labeled as estimates and keep assumptions visible in the user flow.
+- The NextStep submission requires a 3–5 minute demo video, repository/code link, and live app link; verify the current deadline and rules on Devpost before submitting.
 
 ## Pointers
 

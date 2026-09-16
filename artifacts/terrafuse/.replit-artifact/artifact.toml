@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "TerraFuse"
+description = "An environmental decision firewall for organizations. TerraFuse reviews procurement proposals, estimates environmental impact with transparent assumptions, compares lower-impact alternatives, and creates an auditable decision gate before approval."
+version = "1.0.0"
+id = "artifacts/terrafuse"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24592
+
+[services.development]
+run = "pnpm --filter @workspace/terrafuse run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/terrafuse", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/terrafuse/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24592"
+BASE_PATH = "/"
