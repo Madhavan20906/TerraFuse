@@ -226,7 +226,25 @@ button { cursor: pointer; }
 .tf-detail-cell span { display: block; font-family: var(--app-font-mono); text-transform: uppercase; letter-spacing: .08em; font-size: 9px; color: hsl(var(--muted-foreground)); }
 .tf-detail-cell b { display: block; font-size: 12px; margin-top: 5px; }
 .tf-loading { display: grid; place-items: center; min-height: 400px; color: hsl(var(--muted-foreground)); }
-.tf-skeleton { border-radius: 7px; background: linear-gradient(90deg, hsl(var(--muted)), hsl(var(--card)), hsl(var(--muted))); background-size: 200% 100%; animation: tf-shimmer 1.3s ease infinite; }
+.tf-badge-demo { display: inline-flex; align-items: center; gap: 5px; font-family: var(--app-font-mono); font-size: 10px; text-transform: uppercase; background: hsl(var(--accent) / 0.25); color: hsl(var(--accent-foreground)); padding: 2px 7px; border-radius: 4px; font-weight: 600; margin-left: 8px; }
+.tf-badge-verified { display: inline-flex; align-items: center; gap: 4px; font-family: var(--app-font-mono); font-size: 9px; text-transform: uppercase; background: hsl(165 40% 31% / 0.15); color: hsl(165 40% 31%); padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+.tf-progress-card { max-width: 520px; margin: 40px auto; background: hsl(var(--card)); border: 1px solid hsl(var(--card-border)); border-radius: 16px; padding: 28px; box-shadow: 0 10px 35px hsl(var(--foreground) / 0.06); }
+.tf-progress-stage { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid hsl(var(--border)); font-size: 13px; }
+.tf-progress-stage:last-child { border-bottom: 0; }
+.tf-stage-icon { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+.tf-stage-icon.pending { background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); }
+.tf-stage-icon.active { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); animation: tf-shimmer 1.5s infinite; }
+.tf-stage-icon.done { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+.tf-firewall-box { margin-top: 16px; padding: 14px 16px; border-radius: 10px; border: 1px solid; }
+.tf-firewall-box.READY_FOR_REVIEW { background: hsl(165 40% 31% / 0.08); border-color: hsl(165 40% 31% / 0.3); }
+.tf-firewall-box.NEEDS_MORE_DATA { background: hsl(7 57% 46% / 0.08); border-color: hsl(7 57% 46% / 0.3); }
+.tf-firewall-box.HIGH_UNCERTAINTY, .tf-firewall-box.MANUAL_REVIEW_REQUIRED, .tf-firewall-box.EVIDENCE_REQUIRED { background: hsl(35 77% 61% / 0.12); border-color: hsl(35 77% 61% / 0.4); }
+.tf-finding-item { display: flex; gap: 8px; font-size: 12px; margin-top: 6px; line-height: 1.45; }
+.tf-history-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border: 1px solid hsl(var(--border)); border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: all 0.15s ease; background: hsl(var(--card)); }
+.tf-history-item:hover { border-color: hsl(var(--primary)); transform: translateY(-1px); }
+.tf-cert { border: 2px solid hsl(var(--primary)); border-radius: 14px; padding: 28px; background: hsl(var(--card)); position: relative; }
+.tf-cert:after { content: ""; position: absolute; inset: 6px; border: 1px dashed hsl(var(--primary) / 0.3); border-radius: 10px; pointer-events: none; }
+.tf-cert-seal { width: 68px; height: 68px; border-radius: 50%; border: 2px double hsl(var(--primary)); display: grid; place-items: center; text-align: center; font-size: 8px; font-family: var(--app-font-mono); text-transform: uppercase; color: hsl(var(--primary)); font-weight: 700; margin-left: auto; }
 
 @keyframes tf-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes tf-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }

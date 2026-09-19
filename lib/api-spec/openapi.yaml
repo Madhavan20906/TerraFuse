@@ -1,22 +1,24 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: TerraFuse environmental decision firewall API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: Storage
+    description: Object storage upload and serving endpoints.
+  - name: decisions
+    description: Procurement intake, analysis, and decision records.
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +26,313 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      tags: [Storage]
+      summary: Request a presigned URL for file upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlRequest"
+      responses:
+        "200":
+          description: Presigned upload URL generated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+        "400":
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /decisions:
+    get:
+      operationId: listDecisions
+      tags: [decisions]
+      summary: List recent decision records
+      responses:
+        "200":
+          description: Recent records.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DecisionRecord"
+    post:
+      operationId: createDecision
+      tags: [decisions]
+      summary: Extract and analyze an uploaded procurement document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DecisionIntakeInput"
+      responses:
+        "201":
+          description: Decision record created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionRecord"
+        "400":
+          description: Invalid intake.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /decisions/{id}:
+    get:
+      operationId: getDecision
+      tags: [decisions]
+      summary: Get a decision record
+      parameters:
+        - $ref: "#/components/parameters/DecisionId"
+      responses:
+        "200":
+          description: Decision record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionRecord"
+        "404":
+          description: Decision not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    patch:
+      operationId: updateDecisionStatus
+      tags: [decisions]
+      summary: Update the decision status or assumptions
+      parameters:
+        - $ref: "#/components/parameters/DecisionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DecisionStatusInput"
+      responses:
+        "200":
+          description: Updated decision record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionRecord"
+        "404":
+          description: Decision not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /decisions/{id}/audit:
+    get:
+      operationId: getDecisionAudit
+      tags: [decisions]
+      summary: Get audit trail for a decision
+      parameters:
+        - $ref: "#/components/parameters/DecisionId"
+      responses:
+        "200":
+          description: Audit logs list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+        "404":
+          description: Decision not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /decisions/{id}/certificate:
+    get:
+      operationId: getDecisionCertificate
+      tags: [decisions]
+      summary: Get decision verification certificate
+      parameters:
+        - $ref: "#/components/parameters/DecisionId"
+      responses:
+        "200":
+          description: Certificate data.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "404":
+          description: Decision not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
 components:
+  parameters:
+    DecisionId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
   schemas:
     HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        size:
+          type: integer
+          minimum: 1
+        contentType:
+          type: string
+          minLength: 1
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath, metadata]
+      properties:
+        uploadURL:
+          type: string
+        objectPath:
+          type: string
+        metadata:
+          $ref: "#/components/schemas/UploadUrlRequest"
+    DecisionIntakeInput:
+      type: object
+      required: [objectPath, name, size, contentType]
+      properties:
+        objectPath:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        size:
+          type: integer
+          minimum: 1
+        contentType:
+          type: string
+          minLength: 1
+        sourceText:
+          type: string
+    DecisionStatusInput:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
-
+          enum: [intake, review, approved, rejected, changes_requested]
+        assumptions:
+          type: object
+          additionalProperties: true
+        selectedAlternative:
+          type: string
+        reviewNotes:
+          type: string
+        reviewer:
+          type: string
+    DecisionRecord:
+      type: object
+      required: [id, title, status, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        organization:
+          type: ["string", "null"]
+        item:
+          type: ["string", "null"]
+        material:
+          type: ["string", "null"]
+        quantity:
+          type: ["integer", "null"]
+        price:
+          type: ["string", "number", "null"]
+        currency:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        useCase:
+          type: ["string", "null"]
+        currentOption:
+          type: ["string", "null"]
+        fileName:
+          type: ["string", "null"]
+        objectPath:
+          type: ["string", "null"]
+        contentType:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [intake, review, approved, rejected, changes_requested]
+        createdAt:
+          type: string
+          format: date-time
+        parsedData:
+          type: object
+          additionalProperties: true
+        analysis:
+          type: object
+          additionalProperties: true
+        assumptions:
+          type: object
+          additionalProperties: true
+        impact:
+          type: object
+          additionalProperties: true
+        alternatives:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        evidence:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        missingData:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        firewallFlags:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        selectedAlternative:
+          type: ["string", "null"]
+        reviewNotes:
+          type: ["string", "null"]
+        reviewer:
+          type: ["string", "null"]
+        approvedAt:
+          type: ["string", "null"]
+        shareId:
+          type: ["string", "null"]
+        ownerId:
+          type: ["string", "null"]
