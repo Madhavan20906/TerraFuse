@@ -43,4 +43,8 @@ app.use(authMiddleware);
 
 app.use("/api", router);
 
+app.all("/", (_req, res) => {
+  res.status(200).json({ name: "TerraFuse Decision Firewall API", status: "online", health: "/api/health" });
+});
+
 export default app;
