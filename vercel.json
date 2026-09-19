@@ -1,0 +1,15 @@
+{
+  "": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm --filter @workspace/terrafuse run build",
+  "outputDirectory": "artifacts/terrafuse/dist/public",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://terrafuse-backend.onrender.com/api/"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
