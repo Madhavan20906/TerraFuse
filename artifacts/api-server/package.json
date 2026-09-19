@@ -11,6 +11,7 @@
     "test": "tsx --test src/tests/calc.test.ts src/tests/firewall.test.ts src/tests/extractor.test.ts src/tests/api.test.ts"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@google-cloud/storage": "^8.1.0",
     "@types/multer": "^2.2.0",
     "@workspace/api-zod": "workspace:*",
@@ -19,6 +20,7 @@
     "cors": "^2.8.6",
     "drizzle-orm": "catalog:",
     "express": "^5.2.1",
+    "pg": "^8.16.0",
     "google-auth-library": "^11.0.2",
     "mammoth": "^1.12.3",
     "multer": "^2.4.0",
