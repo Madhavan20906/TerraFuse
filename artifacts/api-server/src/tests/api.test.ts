@@ -126,4 +126,40 @@ Reuse: 1 cycle`,
   assert.equal(cert.status, 'approved');
   assert.ok(cert.verificationChecksum);
   assert.equal(cert.reviewer, 'Procurement Lead Alex');
+
+  // 7. Downloadable certificate document
+  const downloadRes = await fetch(`${baseUrl}/api/decisions/${decisionId}/certificate/download`);
+  assert.equal(downloadRes.status, 200);
+  const certHtml = await downloadRes.text();
+  assert.ok(certHtml.includes('TerraFuse · Decision Firewall'));
+  assert.ok(certHtml.includes('VERIFIED ESG RECORD'));
+  assert.ok(certHtml.includes('DEFRA 2024 GHG Conversion Factors'));
+
+  // 8. ERP Webhook Intake (SAP Ariba / Coupa)
+  const webhookRes = await fetch(`${baseUrl}/api/integrations/webhook/po-intake`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      poNumber: 'PO-TEST-2026',
+      system: 'SAP-Ariba',
+      vendor: 'Global Signage Corp',
+      lineItems: [
+        {
+          item: 'Outdoor Event Banners',
+          material: 'PVC banner vinyl',
+          quantity: 200,
+          price: 3200,
+          transportDistanceKm: 400,
+          reuseCycles: 1,
+        },
+      ],
+    }),
+  });
+  assert.equal(webhookRes.status, 201);
+  const webhookJson = (await webhookRes.json()) as any;
+  assert.equal(webhookJson.status, 'success');
+  assert.ok(['BLOCKED', 'WARNING'].includes(webhookJson.firewallVerdict));
+  assert.ok(webhookJson.impact.co2eKg > 0);
+  assert.ok(webhookJson.topAlternative.name);
 });
+

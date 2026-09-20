@@ -187,8 +187,20 @@ const UPLOAD_STAGES = [
   'Synthesizing decision & alternatives...',
 ];
 
+export const ENTERPRISE_PERSONAS = [
+  { id: 'buyer', name: 'Alex Rivera', role: 'Campus Procurement Officer · Buyer', badge: 'Buyer' },
+  { id: 'esg_lead', name: 'Dr. Elena Rostova', role: 'Chief Sustainability Officer · ESG Lead', badge: 'ESG Lead' },
+  { id: 'auditor', name: 'Marcus Vance', role: 'Compliance & ESG Auditor', badge: 'Auditor' },
+];
+
 function Home() {
   const qc = useQueryClient();
+
+  // Active persona
+  const [activePersonaId, setActivePersonaId] = useState<string>(() => {
+    return localStorage.getItem('tf_active_persona_id') || 'buyer';
+  });
+  const currentPersona = ENTERPRISE_PERSONAS.find((p) => p.id === activePersonaId) || ENTERPRISE_PERSONAS[0];
 
   // Active decision ID state with persistence in localStorage and URL
   const [activeId, setActiveId] = useState<number | null>(() => {
@@ -215,8 +227,10 @@ function Home() {
   const [showHistory, setShowHistory] = useState(false);
   const [showCertificate, setShowCertificate] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+  const [compareIds, setCompareIds] = useState<number[]>([]);
   const [reviewAction, setReviewAction] = useState<'approved' | 'rejected' | 'changes_requested'>('approved');
-  const [reviewerName, setReviewerName] = useState('Procurement Reviewer');
+  const [reviewerName, setReviewerName] = useState(currentPersona.name);
   const [reviewNotes, setReviewNotes] = useState('');
 
   // Backend queries
@@ -549,11 +563,59 @@ function Home() {
               <History size={13} style={{ display: 'inline', marginRight: 4 }} />
               History ({decisionsQuery.data?.length || 0})
             </button>
+            {compareIds.length >= 2 && (
+              <button
+                className="active"
+                style={{ background: '#0f766e', color: '#fff' }}
+                onClick={() => setShowCompareModal(true)}
+                data-testid="button-nav-compare"
+              >
+                <Scale size={13} style={{ display: 'inline', marginRight: 4 }} />
+                Compare ({compareIds.length})
+              </button>
+            )}
           </nav>
 
-          <div className="tf-help">
-            <span className="tf-help-dot" />
-            {isDemoMode ? 'sample demo mode' : 'live decision firewall'} <CircleHelp size={15} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 10, textTransform: 'uppercase', fontFamily: 'var(--app-font-mono)', color: 'hsl(var(--muted-foreground))' }}>
+                Role:
+              </span>
+              <select
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  padding: '3px 8px',
+                  borderRadius: 6,
+                  border: '1px solid hsl(var(--border))',
+                  background: 'hsl(var(--card))',
+                  color: 'hsl(var(--foreground))',
+                  cursor: 'pointer',
+                }}
+                value={activePersonaId}
+                onChange={(e) => {
+                  const pId = e.target.value;
+                  setActivePersonaId(pId);
+                  localStorage.setItem('tf_active_persona_id_v2', pId);
+                  const p = ENTERPRISE_PERSONAS.find((x) => x.id === pId);
+                  if (p) {
+                    setReviewerName(p.name);
+                    notify(`Switched persona to ${p.name} (${p.badge})`);
+                  }
+                }}
+              >
+                {ENTERPRISE_PERSONAS.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} · {p.badge}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="tf-help">
+              <span className="tf-help-dot" />
+              {isDemoMode ? 'sample demo' : 'decision firewall'} <CircleHelp size={15} />
+            </div>
           </div>
         </header>
 
@@ -570,8 +632,8 @@ function Home() {
               <em>under review.</em>
             </h1>
             <p>
-              Upload an invoice, quote, or brief (PDF, DOCX, XLSX, CSV, TXT). TerraFuse parses the contents,
-              distinguishes facts from assumptions, and runs a deterministic environmental lifecycle analysis.
+              Upload an invoice, quote, or receipt (PDF, DOCX, XLSX, CSV, TXT, or Scanned Image PNG/JPG).
+              TerraFuse extracts procurement specs with Gemini Vision and runs deterministic lifecycle calculations.
             </p>
 
             {uploading ? (
@@ -603,7 +665,7 @@ function Home() {
                     <FileUp size={14} /> Retry with different file
                     <input
                       type="file"
-                      accept=".pdf,.csv,.xlsx,.docx,.txt"
+                      accept=".pdf,.csv,.xlsx,.docx,.txt,.png,.jpg,.jpeg,.webp"
                       onChange={onFile}
                       style={{ display: 'none' }}
                     />
@@ -616,11 +678,11 @@ function Home() {
             ) : (
               <div className="tf-intake-actions">
                 <label className="tf-button primary tf-file" data-testid="label-upload-intake">
-                  <FileUp size={15} /> Upload procurement file
+                  <FileUp size={15} /> Upload procurement file / receipt
                   <input
                     data-testid="input-upload-file"
                     type="file"
-                    accept=".pdf,.csv,.xlsx,.docx,.txt"
+                    accept=".pdf,.csv,.xlsx,.docx,.txt,.png,.jpg,.jpeg,.webp"
                     onChange={onFile}
                   />
                 </label>
@@ -1398,8 +1460,144 @@ function Home() {
                 Methodology: UK DEFRA GHG Conversion Factors 2024 & US EPA WARM v16 Standard. All lifecycle calculations are deterministic and traceable to primary evidence.
               </div>
 
-              <button className="tf-button primary" style={{ width: '100%', marginTop: 20 }} onClick={() => setShowCertificate(false)}>
-                Close Certificate
+              <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                <a
+                  className="tf-button primary"
+                  style={{
+                    flex: 1,
+                    textDecoration: 'none',
+                    textAlign: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                  }}
+                  href={`/api/decisions/${currentCase.id}/certificate/download`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download={`terrafuse-certificate-${currentCase.id}.html`}
+                >
+                  <Award size={14} /> Download Certificate (.html)
+                </a>
+                <button className="tf-button ghost" onClick={() => setShowCertificate(false)}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+      )}
+
+      {/* Multi-Quote Comparison Modal */}
+      {showCompareModal && (
+        <div className="tf-modal-backdrop" onClick={() => setShowCompareModal(false)}>
+          <article className="tf-modal" style={{ maxWidth: 860 }} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className="tf-modal-header">
+              <div>
+                <div className="tf-kicker">Multi-Vendor Procurement Analysis</div>
+                <h2>Compare Supplier Quotes ({compareIds.length})</h2>
+              </div>
+              <button className="tf-close" onClick={() => setShowCompareModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', marginBottom: 18 }}>
+              Side-by-side environmental lifecycle impact, expenditure variance, and circular risk comparison.
+            </p>
+
+            <div style={{ overflowX: 'auto', border: '1px solid hsl(var(--border))', borderRadius: 8 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ background: 'hsl(var(--muted))', borderBottom: '1px solid hsl(var(--border))' }}>
+                    <th style={{ padding: '10px 14px' }}>Metric</th>
+                    {compareIds.map((cid) => {
+                      const rec = (decisionsQuery.data || []).find((d) => d.id === cid);
+                      return (
+                        <th key={cid} style={{ padding: '10px 14px' }}>
+                          <div style={{ fontWeight: 700, color: '#0f766e' }}>{rec?.title || `Case #${cid}`}</div>
+                          <div style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>{rec?.organization || 'Vendor'}</div>
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
+                    <td style={{ padding: '10px 14px', fontWeight: 600 }}>Material & Commodity</td>
+                    {compareIds.map((cid) => {
+                      const rec = (decisionsQuery.data || []).find((d) => d.id === cid);
+                      return <td key={cid} style={{ padding: '10px 14px' }}>{rec?.item || 'Item'} ({rec?.material || 'Material'})</td>;
+                    })}
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
+                    <td style={{ padding: '10px 14px', fontWeight: 600 }}>Total Price</td>
+                    {compareIds.map((cid) => {
+                      const rec = (decisionsQuery.data || []).find((d) => d.id === cid);
+                      return <td key={cid} style={{ padding: '10px 14px', fontWeight: 700 }}>${fmt(Number(rec?.price) || 0)}</td>;
+                    })}
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
+                    <td style={{ padding: '10px 14px', fontWeight: 600 }}>Embodied Carbon (CO₂e)</td>
+                    {compareIds.map((cid) => {
+                      const rec = (decisionsQuery.data || []).find((d) => d.id === cid);
+                      const co2 = (rec?.impact as any)?.co2eKg || 0;
+                      return (
+                        <td key={cid} style={{ padding: '10px 14px' }}>
+                          <span style={{ fontWeight: 700, color: co2 > 100 ? '#e11d48' : '#0f766e' }}>
+                            {fmt(co2, 1)} kg
+                          </span>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
+                    <td style={{ padding: '10px 14px', fontWeight: 600 }}>Landfill Risk</td>
+                    {compareIds.map((cid) => {
+                      const rec = (decisionsQuery.data || []).find((d) => d.id === cid);
+                      const risk = (rec?.impact as any)?.landfillRisk || 'Medium';
+                      return (
+                        <td key={cid} style={{ padding: '10px 14px' }}>
+                          <span className={`tf-status-pill ${risk === 'High' ? 'rejected' : 'approved'}`}>{risk}</span>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
+                    <td style={{ padding: '10px 14px', fontWeight: 600 }}>Top Recommended Alternative</td>
+                    {compareIds.map((cid) => {
+                      const rec = (decisionsQuery.data || []).find((d) => d.id === cid);
+                      const alt = (rec?.alternatives as any)?.[0];
+                      return (
+                        <td key={cid} style={{ padding: '10px 14px', fontSize: 12 }}>
+                          {alt ? (
+                            <div>
+                              <b>{alt.name}</b>
+                              <div style={{ color: '#0f766e' }}>-{alt.co2eSavingsPercent || 0}% CO₂e</div>
+                            </div>
+                          ) : (
+                            'N/A'
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+              <button
+                className="tf-button ghost"
+                onClick={() => {
+                  setCompareIds([]);
+                  setShowCompareModal(false);
+                }}
+              >
+                Clear Selection
+              </button>
+              <button className="tf-button primary" style={{ flex: 1 }} onClick={() => setShowCompareModal(false)}>
+                Done
               </button>
             </div>
           </article>
@@ -1420,11 +1618,25 @@ function Home() {
               </button>
             </div>
 
-            <p style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))' }}>
-              All decisions evaluated through the TerraFuse firewall are persisted in the database.
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <p style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', margin: 0 }}>
+                Select multiple quotes to compare environmental metrics side-by-side.
+              </p>
+              {compareIds.length >= 2 && (
+                <button
+                  className="tf-button primary"
+                  style={{ height: 28, fontSize: 11, padding: '2px 10px' }}
+                  onClick={() => {
+                    setShowHistory(false);
+                    setShowCompareModal(true);
+                  }}
+                >
+                  <Scale size={12} style={{ marginRight: 4 }} /> Compare ({compareIds.length})
+                </button>
+              )}
+            </div>
 
-            <div style={{ marginTop: 16 }}>
+            <div style={{ marginTop: 12 }}>
               {/* Demo case entry */}
               <div
                 className="tf-history-item"
@@ -1450,20 +1662,37 @@ function Home() {
                   <div
                     className="tf-history-item"
                     key={rec.id}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                     onClick={() => selectCaseFromHistory(rec.id)}
                   >
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>
-                        {rec.title}
-                        {rec.id === activeId && !isDemoMode && (
-                          <span className="tf-badge-verified" style={{ marginLeft: 6 }}>
-                            Active
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', marginTop: 2 }}>
-                        Case #{rec.id} · {rec.item || 'Item'} · ${fmt(Number(rec.price) || 0)} ·{' '}
-                        {new Date(rec.createdAt).toLocaleDateString()}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <input
+                        type="checkbox"
+                        checked={compareIds.includes(rec.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setCompareIds((prev) => [...prev, rec.id]);
+                          } else {
+                            setCompareIds((prev) => prev.filter((id) => id !== rec.id));
+                          }
+                        }}
+                        style={{ cursor: 'pointer', accentColor: '#0f766e', width: 15, height: 15 }}
+                        title="Select for quote comparison"
+                      />
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>
+                          {rec.title}
+                          {rec.id === activeId && !isDemoMode && (
+                            <span className="tf-badge-verified" style={{ marginLeft: 6 }}>
+                              Active
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', marginTop: 2 }}>
+                          Case #{rec.id} · {rec.item || 'Item'} · ${fmt(Number(rec.price) || 0)} ·{' '}
+                          {new Date(rec.createdAt).toLocaleDateString()}
+                        </div>
                       </div>
                     </div>
                     <span className={`tf-status-pill ${rec.status}`}>{rec.status}</span>

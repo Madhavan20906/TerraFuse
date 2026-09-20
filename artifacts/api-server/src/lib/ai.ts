@@ -267,3 +267,109 @@ ${extractedText.slice(0, 14000)}
   const heuristic = parseProcurementHeuristically(extractedText, fileName);
   return { analysis: heuristic, provider: 'deterministic-heuristic-engine' };
 }
+
+/**
+ * Analyzes an image-based procurement document (scanned PO, photo of invoice, PNG/JPG/WEBP)
+ * using Google Gemini Multimodal Vision API.
+ */
+export async function analyzeImageDocumentWithAi(
+  imageBuffer: Buffer,
+  mimeType: string,
+  fileName: string
+): Promise<{ analysis: AiProcurementAnalysis; provider: string; transcribedText: string }> {
+  const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  const base64Data = imageBuffer.toString('base64');
+
+  const prompt = `You are an environmental procurement analyst and OCR specialist for TerraFuse Decision Firewall.
+Examine this scanned procurement document / purchase order image.
+1. Transcribe the readable text from the document faithfully.
+2. Extract the structured procurement fields in JSON matching this exact schema:
+{
+  "transcribedText": string,
+  "title": string,
+  "organization": string,
+  "item": string,
+  "material": string,
+  "materialComposition": string,
+  "quantity": number,
+  "unit": string,
+  "unitCost": number,
+  "totalCost": number,
+  "currency": string,
+  "location": string,
+  "useCase": string,
+  "currentOption": string,
+  "reuseCycles": number,
+  "transportDistanceKm": number,
+  "transportMode": string,
+  "packaging": string,
+  "disposalRoute": string,
+  "supplierClaims": string[],
+  "riskFactors": string[],
+  "dataQuality": {
+    "knownFacts": string[],
+    "inferred": string[],
+    "assumptions": string[],
+    "missing": string[]
+  },
+  "missingInformation": [
+    { "field": string, "severity": "REQUIRED" | "RECOMMENDED" | "OPTIONAL", "description": string }
+  ]
+}
+
+DO NOT estimate or hallucinate environmental metrics (CO2e, landfill kg, water). Those are calculated deterministically downstream.`;
+
+  if (geminiKey) {
+    for (const modelName of ['gemini-flash-latest', 'gemini-3.5-flash', 'gemini-3-flash-preview']) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    { text: prompt },
+                    {
+                      inlineData: {
+                        mimeType: mimeType.startsWith('image/') ? mimeType : 'image/png',
+                        data: base64Data,
+                      },
+                    },
+                  ],
+                },
+              ],
+              generationConfig: {
+                responseMimeType: 'application/json',
+                temperature: 0.1,
+              },
+            }),
+            signal: AbortSignal.timeout(30000),
+          }
+        );
+
+        if (response.ok) {
+          const json = (await response.json()) as any;
+          const rawContent = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (rawContent) {
+            const parsed = JSON.parse(rawContent);
+            const transcribed = parsed.transcribedText || `Scanned document: ${fileName}`;
+            delete parsed.transcribedText;
+            const validated = aiProcurementSchema.parse(parsed);
+            return { analysis: validated, provider: `${modelName}-vision`, transcribedText: transcribed };
+          }
+        }
+      } catch (err) {
+        console.warn(`Gemini Vision (${modelName}) failed:`, err);
+      }
+    }
+  }
+
+  // Fallback if no Gemini key or offline
+  const fallbackText = `Scanned Image Document: ${fileName}\nFormat: ${mimeType}\nSize: ${imageBuffer.length} bytes`;
+  const heuristic = parseProcurementHeuristically(fallbackText, fileName);
+  return { analysis: heuristic, provider: 'vision-heuristic-fallback', transcribedText: fallbackText };
+}
+

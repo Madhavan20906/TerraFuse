@@ -2,7 +2,7 @@
 
 export interface ExtractionResult {
   text: string;
-  fileType: 'pdf' | 'docx' | 'xlsx' | 'csv' | 'txt';
+  fileType: 'pdf' | 'docx' | 'xlsx' | 'csv' | 'txt' | 'image';
   pageCount?: number;
   tableCount?: number;
   tables?: Array<Array<string[]>>;
@@ -127,5 +127,23 @@ export async function extractDocumentContent(
     };
   }
 
-  throw new Error(`Unsupported file type: .${extension} (${mimeType}). Supported formats: PDF, DOCX, XLSX, CSV, TXT.`);
+  // 5. Image Files (PNG, JPG, JPEG, WEBP) - Multimodal Vision OCR
+  if (
+    ['png', 'jpg', 'jpeg', 'webp', 'tiff', 'bmp'].includes(extension) ||
+    mimeType.startsWith('image/')
+  ) {
+    try {
+      const { analyzeImageDocumentWithAi } = await import('./ai');
+      const ocrResult = await analyzeImageDocumentWithAi(buffer, mimeType, fileName);
+      return {
+        text: ocrResult.transcribedText,
+        fileType: 'image',
+        metadata: { fileName, fileSize: buffer.length, mimeType },
+      };
+    } catch (err: any) {
+      throw new Error(`Failed to perform Vision OCR on image document: ${err.message}`);
+    }
+  }
+
+  throw new Error(`Unsupported file type: .${extension} (${mimeType}). Supported formats: PDF, DOCX, XLSX, CSV, TXT, PNG, JPG, WEBP.`);
 }
