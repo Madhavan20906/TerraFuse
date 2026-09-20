@@ -1,6 +1,4 @@
-import { PDFParse } from 'pdf-parse';
-import mammoth from 'mammoth';
-import * as xlsx from 'xlsx';
+
 
 export interface ExtractionResult {
   text: string;
@@ -33,10 +31,14 @@ export async function extractDocumentContent(
   // 1. PDF
   if (extension === 'pdf' || mimeType.includes('pdf')) {
     try {
-      const parser = new PDFParse({ data: buffer });
+      const pdfModule: any = await import('pdf-parse');
+      const PDFParseClass = pdfModule.PDFParse || pdfModule.default?.PDFParse || pdfModule.default || pdfModule;
+      const parser = new PDFParseClass({ data: buffer });
       const textResult = await parser.getText();
       const text = typeof textResult === 'string' ? textResult : (textResult?.text || '');
-      await parser.destroy();
+      if (typeof parser.destroy === 'function') {
+        await parser.destroy();
+      }
 
       if (!text || text.trim().length === 0) {
         throw new Error('No readable text could be extracted from this PDF. It may be a scanned image or encrypted.');
@@ -58,7 +60,9 @@ export async function extractDocumentContent(
   // 2. DOCX
   if (extension === 'docx' || mimeType.includes('wordprocessingml')) {
     try {
-      const result = await mammoth.extractRawText({ buffer });
+      const mammothModule: any = await import('mammoth');
+      const mammothInstance = mammothModule.default || mammothModule;
+      const result = await mammothInstance.extractRawText({ buffer });
       const text = result.value.trim();
       if (!text) {
         throw new Error('Word document contains no extractable text.');
@@ -76,7 +80,9 @@ export async function extractDocumentContent(
   // 3. XLSX / CSV
   if (extension === 'xlsx' || extension === 'xls' || extension === 'csv' || mimeType.includes('spreadsheet') || mimeType.includes('csv')) {
     try {
-      const workbook = xlsx.read(buffer, { type: 'buffer' });
+      const xlsxModule: any = await import('xlsx');
+      const xlsxInstance = xlsxModule.default || xlsxModule;
+      const workbook = xlsxInstance.read(buffer, { type: 'buffer' });
       const sheetNames = workbook.SheetNames;
       if (!sheetNames || sheetNames.length === 0) {
         throw new Error('Spreadsheet has no worksheets.');
@@ -88,11 +94,11 @@ export async function extractDocumentContent(
       for (const sheetName of sheetNames) {
         const worksheet = workbook.Sheets[sheetName];
         if (!worksheet) continue;
-        const csv = xlsx.utils.sheet_to_csv(worksheet);
-        const rows = xlsx.utils.sheet_to_json<string[]>(worksheet, { header: 1 });
+        const csv = xlsxInstance.utils.sheet_to_csv(worksheet);
+        const rows = xlsxInstance.utils.sheet_to_json(worksheet, { header: 1 });
         fullText += `--- Sheet: ${sheetName} ---\n${csv}\n\n`;
         if (rows && rows.length > 0) {
-          tables.push(rows);
+          tables.push(rows as string[][]);
         }
       }
 
