@@ -155,20 +155,7 @@ if (typeof globalThis.Path2D === 'undefined') {
     },
   });
 
-  // Copy pglite assets to dist/ if present
-  const fsPromises = await import('node:fs/promises');
-  try {
-    const pgliteDist = path.dirname(createRequire(import.meta.url).resolve('@electric-sql/pglite'));
-    for (const f of ['pglite.data', 'pglite.wasm']) {
-      try {
-        await fsPromises.copyFile(path.join(pgliteDist, f), path.join(distDir, f));
-      } catch (e) {
-        console.warn(`Could not copy ${f}:`, e.message);
-      }
-    }
-  } catch (err) {
-    console.warn('Could not resolve @electric-sql/pglite dist:', err.message);
-  }
+
 }
 
 buildAll().catch((err) => {
