@@ -675,20 +675,32 @@ function Home() {
                 </div>
               </div>
             ) : (
-              <div className="tf-intake-actions">
-                <label className="tf-button primary tf-file" data-testid="label-upload-intake">
-                  <FileUp size={15} /> Upload procurement file / receipt
-                  <input
-                    data-testid="input-upload-file"
-                    type="file"
-                    accept=".pdf,.csv,.xlsx,.docx,.txt,.png,.jpg,.jpeg,.webp"
-                    onChange={onFile}
-                  />
-                </label>
-                <button className="tf-button ghost" onClick={loadDemo} data-testid="button-load-demo">
-                  <Sparkles size={15} /> Use festival demo
-                </button>
-              </div>
+              <>
+                <div className="tf-intake-actions">
+                  <label className="tf-button primary tf-file" data-testid="label-upload-intake">
+                    <FileUp size={15} /> Upload procurement file / receipt
+                    <input
+                      data-testid="input-upload-file"
+                      type="file"
+                      accept=".pdf,.csv,.xlsx,.docx,.txt,.png,.jpg,.jpeg,.webp"
+                      onChange={onFile}
+                    />
+                  </label>
+                  <button className="tf-button ghost" onClick={loadDemo} data-testid="button-load-demo">
+                    <Sparkles size={15} /> Use festival demo
+                  </button>
+                </div>
+                <div style={{ marginTop: 14, fontSize: 13, color: 'hsl(var(--muted-foreground))' }}>
+                  Need a test file?{' '}
+                  <a
+                    href="/sample_procurement_quote.pdf"
+                    download="sample_procurement_quote.pdf"
+                    style={{ color: 'hsl(var(--primary))', textDecoration: 'underline', fontWeight: 600 }}
+                  >
+                    Download Sample Vendor Quote (PDF)
+                  </a>
+                </div>
+              </>
             )}
 
             <div className="tf-status-line" style={{ justifyContent: 'center' }}>
