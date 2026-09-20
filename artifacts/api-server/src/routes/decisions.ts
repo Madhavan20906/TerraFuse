@@ -656,7 +656,16 @@ router.get('/decisions/:id/certificate/download', async (req: Request, res: Resp
 <body>
 <div class="cert-border">
   <div class="header">
-    <div class="brand">🌿 TerraFuse · Decision Firewall</div>
+    <div class="brand" style="display:flex;align-items:center;gap:10px;">
+      <svg width="28" height="28" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="3" width="174" height="174" rx="44" fill="#041F17" stroke="#10B981" stroke-width="5"/>
+        <path d="M90 42C64 42 48 64 48 90C48 116 68 134 90 134C108 134 122 122 124 104C125 94 116 86 106 86C96 86 88 94 88 104C88 110 82 116 74 114C64 111 58 102 58 90C58 72 72 58 90 58C108 58 122 72 122 90" stroke="#10B981" stroke-width="12" stroke-linecap="round"/>
+        <path d="M90 42C116 42 132 64 132 90C132 116 114 134 90 134" stroke="#06B6D4" stroke-width="12" stroke-linecap="round"/>
+        <path d="M74 106L106 74" stroke="#6EE7B7" stroke-width="8" stroke-linecap="round"/>
+        <circle cx="90" cy="90" r="8" fill="#F0FDF4" stroke="#10B981" stroke-width="3"/>
+      </svg>
+      <span>TerraFuse · Decision Firewall</span>
+    </div>
     <div class="seal">VERIFIED ESG RECORD</div>
   </div>
 

@@ -30,6 +30,7 @@ import {
   FileText
 } from 'lucide-react';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
+import { TerraFuseLogo } from './components/TerraFuseLogo';
 import {
   useListDecisions,
   useGetDecision,
@@ -528,9 +529,7 @@ function Home() {
             data-testid="button-brand-home"
             aria-label="TerraFuse home"
           >
-            <span className="tf-mark" aria-hidden="true">
-              <Leaf size={15} />
-            </span>
+            <TerraFuseLogo size={30} />
             <span className="tf-wordmark">
               terra<span>fuse</span>
             </span>
@@ -1386,13 +1385,16 @@ function Home() {
           <article className="tf-modal" style={{ maxWidth: 640 }} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
             <div className="tf-cert">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <div className="tf-kicker">Official Verification Certificate</div>
-                  <h2 style={{ fontFamily: 'var(--app-font-serif)', fontSize: 32, margin: '4px 0 10px' }}>
-                    TerraFuse Impact Record
-                  </h2>
-                  <div style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>
-                    Case #{currentCase.id || '042'} · Share ID: {currentCase.shareId || 'tf-pub-42879'}
+                <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+                  <TerraFuseLogo size={42} />
+                  <div>
+                    <div className="tf-kicker">Official Verification Certificate</div>
+                    <h2 style={{ fontFamily: 'var(--app-font-serif)', fontSize: 28, margin: '2px 0 6px' }}>
+                      TerraFuse Impact Record
+                    </h2>
+                    <div style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>
+                      Case #{currentCase.id || '042'} · Share ID: {currentCase.shareId || 'tf-pub-42879'}
+                    </div>
                   </div>
                 </div>
                 <div className="tf-cert-seal">
