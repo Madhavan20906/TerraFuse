@@ -1,14 +1,14 @@
 {
-  "": "https://openapi.vercel.sh/vercel.json",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "pnpm --filter @workspace/terrafuse run build",
-  "outputDirectory": "artifacts/terrafuse/dist/public",
+  "outputDirectory": "artifacts/terrafuse/dist",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://terrafuse-backend.onrender.com/api/"
+      "source": "/api/:path*",
+      "destination": "https://terrafuse-backend.onrender.com/api/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ]
