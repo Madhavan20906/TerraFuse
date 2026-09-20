@@ -40,7 +40,7 @@ function getFileBuffer(objectPath: string): Buffer | null {
  */
 router.post('/decisions', async (req: Request, res: Response) => {
   try {
-    const { objectPath, name, size, contentType, sourceText: directSourceText } = req.body;
+    const { objectPath, name, size, contentType, sourceText: directSourceText } = req.body || {};
 
     let extractedText = directSourceText || '';
     let extractionMeta: any = { fileName: name || 'procurement-document', fileSize: size || 0, mimeType: contentType || 'text/plain' };
@@ -381,7 +381,7 @@ router.patch(['/decisions/:id', '/decisions/:id/status'], async (req: Request, r
       return;
     }
 
-    const { status, assumptions: newAssumptionsInput, selectedAlternative, reviewNotes, reviewer } = req.body;
+    const { status, assumptions: newAssumptionsInput, selectedAlternative, reviewNotes, reviewer } = req.body || {};
 
     let updatedStatus = existing.status;
     let updatedAssumptions = existing.assumptions as any;

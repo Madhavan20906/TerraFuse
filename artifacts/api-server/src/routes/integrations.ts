@@ -14,13 +14,14 @@ const router: IRouter = Router();
  */
 router.post('/integrations/webhook/po-intake', async (req: Request, res: Response) => {
   try {
+    const body = req.body || {};
     const {
       poNumber = 'PO-DRAFT-' + Date.now().toString().slice(-4),
       system = 'ERP-Connector',
       vendor = 'Vendor Unknown',
       lineItems = [],
       deliveryLocation = 'Standard Destination',
-    } = req.body;
+    } = body;
 
     if (!Array.isArray(lineItems) || lineItems.length === 0) {
       res.status(400).json({
